@@ -1,5 +1,6 @@
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Array;
 
 import org.apache.commons.io.FileUtils;
 
@@ -14,20 +15,25 @@ public class main {
 		  System.out.println("Free memory (bytes): " + 
 		  Runtime.getRuntime().freeMemory());
 		
-		  File folder = new File("/home/gogopavl/workspace2/IRAssignment/catalogue");
+		  File folder = new File("C:\\Users\\gogopavl\\git\\IRAssignment\\catalogue");
 		  File[] listOfFiles = folder.listFiles();
+		  String [] filesToSend = new String[listOfFiles.length];
 		  //osa xwrane stin mnimi
 		  for (int i = 0; i < listOfFiles.length; i++) {
 		    File file = listOfFiles[i];
 		    if (file.isFile() && file.getName().endsWith(".txt")) {
-		      String content = FileUtils.readFileToString(file);
 		      /* do somthing with content */
-		      
-		      
+//		    	System.out.println(file.getName());
+		    	filesToSend[i] = file.getName();
 		    } 
 		  }
+		   
 		  
-		  invertedIndex i = new invertedIndex();
+		  
+		  //invertedIndex i = new invertedIndex(filesToSend);
+		  Runnable r = new invertedIndex(filesToSend);
+		  new Thread(r).start();
+		 
 		  
 		  System.out.println("Ended");
 		  
