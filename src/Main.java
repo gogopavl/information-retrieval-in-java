@@ -15,7 +15,7 @@ public class Main {
 		  System.out.println("Free memory (bytes): " + 
 		  Runtime.getRuntime().freeMemory());
 		
-		  File folder = new File("C:\\Users\\gogopavl\\git\\IRAssignment\\catalogue");
+		  File folder = new File("C:\\Users\\aintzevi\\git\\IRAssignment\\catalogue");
 		  File[] listOfFiles = folder.listFiles();
 		  String [] filesToSend = new String[listOfFiles.length];
 		  //osa xwrane stin mnimi
