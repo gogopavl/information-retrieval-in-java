@@ -6,6 +6,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -19,7 +20,6 @@ import org.apache.commons.io.FileUtils;
 
 
 public class InvertedIndexThread implements Runnable{
-	
 	private String [] listOfFilesToProcess;
 	public InvertedIndexThread(){
 		//empty ctor
@@ -118,12 +118,12 @@ public class InvertedIndexThread implements Runnable{
 		    				int tempFreq = miniInvertedIndex.get(currentToken).getIndexForGivenDocID(Integer.parseInt(docID));
 		    				if(tempFreq >= 0 ){//Periptwsi pou uparxei to doc kai thelei enimerwsi to frequency tou orou
 		    					int currentFreq = miniInvertedIndex.get(currentToken).getDocList().get(tempFreq).getTermFrequency();
-		    					miniInvertedIndex.get(currentToken).getDocList().get(tempFreq).setTermFrequency(currentFreq + 1);		    				}
+		    					miniInvertedIndex.get(currentToken).getDocList().get(tempFreq).setTermFrequency(currentFreq + 1);
+	    					}
 		    				else{//periptwsi pou uparxei to term, exei lista apo docs, alla oxi to sugkekrimeno doc
 		    					TermFreqInDoc tempListElement = new TermFreqInDoc(Integer.parseInt(docID),1);
 		    					miniInvertedIndex.get(currentToken).getDocList().add(tempListElement);
-		    				}	    				
-		    			
+		    				}
 			    		}
 			    	} // End of tokenizer while loop
 			    } // End of read line loop
@@ -156,6 +156,7 @@ public class InvertedIndexThread implements Runnable{
 		System.out.println("Mini inverted index works");
 		//TODO 1. multithreading 2. merge mini inverted indexes 3. queries
 	}//end of Run method
+	
 	
 	/**
 	 * Function to write the mini inverted index to file.
