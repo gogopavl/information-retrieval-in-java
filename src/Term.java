@@ -1,14 +1,14 @@
 import java.util.ArrayList;
 
-public class term {
+public class Term {
 	private String word;
-	private ArrayList<termFreqInDoc> docList;
-	public term(String w, termFreqInDoc i){
+	private ArrayList<TermFreqInDoc> docList;
+	public Term(String w, TermFreqInDoc i){
 		docList = new ArrayList<>();
 		this.word = w;
 		this.docList.add(i);
 	}
-	public term(){
+	public Term(){
 		//empty
 	}
 	public String getWord() {
@@ -17,10 +17,10 @@ public class term {
 	public void setWord(String word) {
 		this.word = word;
 	}
-	public ArrayList<termFreqInDoc> getDocList() {
+	public ArrayList<TermFreqInDoc> getDocList() {
 		return docList;
 	}
-	public void setDocList(ArrayList<termFreqInDoc> docList) {
+	public void setDocList(ArrayList<TermFreqInDoc> docList) {
 		this.docList = docList;
 	}
 	public int getIndexForGivenDocID (int docID){

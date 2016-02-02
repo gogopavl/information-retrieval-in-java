@@ -12,12 +12,13 @@ import java.util.StringTokenizer;
 import org.apache.commons.io.FileUtils;
 
 
-public class invertedIndex implements Runnable{
+public class InvertedIndexThread implements Runnable{
 	
-	private   Hashtable<String, ArrayList<Integer>> invertedIndex = new Hashtable<>();
-	public String [] listOfFilesToProcess;
-	
-	public invertedIndex(String [] filenames){
+	private String [] listOfFilesToProcess;
+	public InvertedIndexThread(){
+		//empty ctor
+	}
+	public InvertedIndexThread(String [] filenames){
 		this.listOfFilesToProcess = filenames;
 	};
 	/*
@@ -76,11 +77,10 @@ public class invertedIndex implements Runnable{
 	}
 	*/
 
-
 	@Override
 	public void run() {
 		
-		HashMap<String, term> miniInvertedIndex = new HashMap<>();
+		HashMap<String, Term> miniInvertedIndex = new HashMap<>();
 		
 		//File folder = new File("C:\\Users\\gogopavl\\git\\IRAssignment\\catalogue");
 		File [] listOfFiles = new File[listOfFilesToProcess.length];
@@ -103,8 +103,8 @@ public class invertedIndex implements Runnable{
 			    		
 			    		// If the word is not in the hash table
 			    		if (!miniInvertedIndex.containsKey(currentToken)) {
-			    			termFreqInDoc tempListElement = new termFreqInDoc(Integer.parseInt(docID),1);
-			    			term t = new term(currentToken, tempListElement);
+			    			TermFreqInDoc tempListElement = new TermFreqInDoc(Integer.parseInt(docID),1);
+			    			Term t = new Term(currentToken, tempListElement);
 			    			miniInvertedIndex.put(t.getWord() , t);
 			    		}
 			    		else {
@@ -113,7 +113,7 @@ public class invertedIndex implements Runnable{
 		    					int currentFreq = miniInvertedIndex.get(currentToken).getDocList().get(tempFreq).getTermFrequency();
 		    					miniInvertedIndex.get(currentToken).getDocList().get(tempFreq).setTermFrequency(currentFreq + 1);		    				}
 		    				else{//periptwsi pou uparxei to term, exei lista apo docs, alla oxi to sugkekrimeno doc
-		    					termFreqInDoc tempListElement = new termFreqInDoc(Integer.parseInt(docID),1);
+		    					TermFreqInDoc tempListElement = new TermFreqInDoc(Integer.parseInt(docID),1);
 		    					miniInvertedIndex.get(currentToken).getDocList().add(tempListElement);
 		    				}	    				
 		    			

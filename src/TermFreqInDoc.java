@@ -1,11 +1,11 @@
 
-public class termFreqInDoc {
+public class TermFreqInDoc {
 	private int docId;
 	private int termFrequency;
-	public termFreqInDoc(){
+	public TermFreqInDoc(){
 		//empty
 	}
-	public termFreqInDoc(int id, int freq){
+	public TermFreqInDoc(int id, int freq){
 		this.docId = id;
 		this.termFrequency = freq;
 	}

@@ -4,7 +4,7 @@ import java.lang.reflect.Array;
 
 import org.apache.commons.io.FileUtils;
 
-public class main {
+public class Main {
 
 	public static void main(String[] args) throws IOException {
 		// TODO Auto-generated method stub
@@ -27,13 +27,9 @@ public class main {
 		    	filesToSend[i] = file.getName();
 		    } 
 		  }
-		   
-		  
-		  
 		  //invertedIndex i = new invertedIndex(filesToSend);
-		  Runnable r = new invertedIndex(filesToSend);
+		  Runnable r = new InvertedIndexThread(filesToSend);
 		  new Thread(r).start();
-		 
 		  
 		  System.out.println("Ended");
 		  
