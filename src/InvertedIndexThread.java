@@ -12,21 +12,30 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
+import java.util.concurrent.Callable;
+
+import javax.print.Doc;
 
 import org.apache.commons.io.FileUtils;
 
 
-public class InvertedIndexThread implements Runnable{
+public class InvertedIndexThread implements Callable<TreeMap<Integer, DocInfo>> {
 	private String [] listOfFilesToProcess;
+	private TreeMap<Integer, DocInfo> docInfoList;
+	
 	public InvertedIndexThread(){
 		//empty ctor
 	}
-	public InvertedIndexThread(String [] filenames){
+	
+	public InvertedIndexThread(String [] filenames, TreeMap<Integer, DocInfo> docInfoList){
 		this.listOfFilesToProcess = filenames;
+		this.docInfoList = docInfoList;
 	};
+	
 	/*
 	public invertedIndex(String [] filenames) throws FileNotFoundException, IOException{
 		this.listOfFilesToProcess = filenames;
@@ -84,8 +93,8 @@ public class InvertedIndexThread implements Runnable{
 	*/
 
 	@Override
-	public void run() {
-		
+	public TreeMap<Integer, DocInfo> call() {
+		System.out.println("call");
 		Map<String, Term> miniInvertedIndex = new HashMap<>();
 		
 		//File folder = new File("C:\\Users\\gogopavl\\git\\IRAssignment\\catalogue");
@@ -94,19 +103,31 @@ public class InvertedIndexThread implements Runnable{
 		for(int i = 0 ; i < listOfFiles.length ; ++i){
 			listOfFiles[i] = new File("C:\\Users\\aintzevi\\git\\IRAssignment\\catalogue\\"+listOfFilesToProcess[i]);			
 		}
+		DocInfo currentDocInfo = null;
+		
 		for(File f : listOfFiles){
+			
+			currentDocInfo = new DocInfo();
 			
 	    	try (BufferedReader br = new BufferedReader(new FileReader(f))) {
 			    
 	    		String line;
+	    		// Get the docID, which is the name of the current file
 	    		String docID = f.getName().replaceFirst(".txt", "");
-			    while ((line = br.readLine()) != null) {
+	    		// Store the docID as an integer in the DocInfo object
+	    		currentDocInfo.setDocID(Integer.parseInt(docID));
+			    String mostFreqTerm = null;
+			    int mostFreqTermFrequency = 0;
+			    
+	    		while ((line = br.readLine()) != null) {
 			       
 			    	StringTokenizer tokenizer = new StringTokenizer(line, " .,;:!*^/");
 			    	String currentToken;
 			    	
 			    	while(tokenizer.hasMoreTokens()){
 			    		currentToken = tokenizer.nextToken().toLowerCase();
+			    		// Update the number of words
+			    		currentDocInfo.setNumOfWords(currentDocInfo.getNumOfWords() + 1);
 			    		
 			    		// If the word is not in the hash table
 			    		if (!miniInvertedIndex.containsKey(currentToken)) {
@@ -115,10 +136,21 @@ public class InvertedIndexThread implements Runnable{
 			    			miniInvertedIndex.put(t.getWord() , t);
 			    		}
 			    		else {
+			    			// index of the docId, freq arraylist, for current doc
 		    				int tempFreq = miniInvertedIndex.get(currentToken).getIndexForGivenDocID(Integer.parseInt(docID));
 		    				if(tempFreq >= 0 ){//Periptwsi pou uparxei to doc kai thelei enimerwsi to frequency tou orou
+		    					
 		    					int currentFreq = miniInvertedIndex.get(currentToken).getDocList().get(tempFreq).getTermFrequency();
+		    					// Increment the term frequency for current term for this doc
 		    					miniInvertedIndex.get(currentToken).getDocList().get(tempFreq).setTermFrequency(currentFreq + 1);
+		    					
+		    					if(miniInvertedIndex.get(currentToken).getDocList().get(tempFreq).getTermFrequency() >= mostFreqTermFrequency) {
+		    						// Set the current most frequent word and its frequency to these of the current term
+		    						System.out.println("Inside if" + mostFreqTerm + mostFreqTermFrequency);
+		    						mostFreqTermFrequency = miniInvertedIndex.get(currentToken).getDocList().get(tempFreq).getTermFrequency();
+		    						mostFreqTerm  = miniInvertedIndex.get(currentToken).getWord();
+		    						System.out.println("Inside if" + mostFreqTerm + mostFreqTermFrequency);
+		    					}
 	    					}
 		    				else{//periptwsi pou uparxei to term, exei lista apo docs, alla oxi to sugkekrimeno doc
 		    					TermFreqInDoc tempListElement = new TermFreqInDoc(Integer.parseInt(docID),1);
@@ -127,24 +159,22 @@ public class InvertedIndexThread implements Runnable{
 			    		}
 			    	} // End of tokenizer while loop
 			    } // End of read line loop
+	    		currentDocInfo.setMostFreqWord(mostFreqTerm);
+				currentDocInfo.setMostFreqWordFrequency(mostFreqTermFrequency);
+				
 			}
 			catch(IOException e){ System.out.println("File not found");};	
-	    }
-		
-		Map<String, Term> treeMap = new TreeMap<String, Term>(miniInvertedIndex);
+			
+			docInfoList.put(currentDocInfo.getDocID(), new DocInfo(currentDocInfo.getDocID(), 
+					currentDocInfo.getNumOfWords(), currentDocInfo.getMostFreqWord(), 
+					currentDocInfo.getMostFreqWordFrequency()));
+	    } // End of for-loop
 		
 		/*
 		for(Map.Entry<String, Term> entry : treeMap.entrySet()) {
 			System.out.println(" Key : " + entry.getKey());
 		}
 		*/	
-		/*try {
-			writeInvertedIndexToFile(treeMap);
-			
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}*/
 		
 		try {
 			System.out.println(binarySearch(new RandomAccessFile(new File("output\\outFile.txt"), "r"), "00"));
@@ -154,8 +184,15 @@ public class InvertedIndexThread implements Runnable{
 		}
 		
 		System.out.println("Mini inverted index works");
+		
+		/*docInfoList.put(55, new DocInfo(55, 100, "example", 10));
+		docInfoList.put(new Random().nextInt(100), new DocInfo(11, 100, "example", 10));
+		*/
+		
 		//TODO 1. multithreading 2. merge mini inverted indexes 3. queries
-	}//end of Run method
+		return docInfoList;
+		
+	}//end of call method
 	
 	
 	/**
