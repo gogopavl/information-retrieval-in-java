@@ -23,14 +23,20 @@ public class Term {
 	public void setDocList(ArrayList<TermFreqInDoc> docList) {
 		this.docList = docList;
 	}
+	
+	/**
+	 * Function to get the index of a doc in the array list of docs and frequencies, using the docID
+	 * @param docID The docID which index we want to get
+	 * @return The index of the docId in the array list of docs and frequencies
+	 */
 	public int getIndexForGivenDocID (int docID){
+		// Iterate through the the array list of docs and frequencies
 		for(int i = 0 ; i < docList.size() ; ++i){
+			// If the docID exists, return its index
 			if(docID == docList.get(i).getDocId()){
 				return i;
 			}
 		}
 		return -1;
 	}
-	
-
 }
