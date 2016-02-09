@@ -78,5 +78,8 @@ public class Main {
 		// Shutting down the executor service
 		service.shutdownNow();
 	}
+	public void externalMergeFunction(File folder){
+		File [] filesToBeSorted = folder.listFiles();
+	}
 
 }
