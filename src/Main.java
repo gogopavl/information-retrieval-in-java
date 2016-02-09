@@ -95,8 +95,11 @@ public class Main {
 		// List with output files
 		File [] filesToBeSorted = folder.listFiles();
 		
-		
-		
+		// diagrafh arxeiwn inpout ths twoWayMerge
+		// pairs of files from filesToBeSorted (check if odd first)
+		// call twoWayMerge for each pair
+		// Give proper merged files names
+		// Rename left out files properly
 		
 	}
 	
