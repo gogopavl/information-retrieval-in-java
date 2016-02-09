@@ -32,7 +32,7 @@ public class InvertedIndexThread implements Callable<TreeMap<Integer, DocInfo>> 
 		this.outname = outname;
 	};
 
-	
+	//comment
 	/**
 	 * Method executed in a thread
 	 * Creating a mini inverted index for specified files and saving it in file
