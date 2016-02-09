@@ -15,6 +15,7 @@ import java.util.concurrent.Callable;
 public class InvertedIndexThread implements Callable<TreeMap<Integer, DocInfo>> {
 	private String [] listOfFilesToProcess;
 	private TreeMap<Integer, DocInfo> docInfoList;
+	private String outname;
 	
 	public InvertedIndexThread(){
 		//empty ctor
@@ -25,9 +26,10 @@ public class InvertedIndexThread implements Callable<TreeMap<Integer, DocInfo>> 
 	 * @param filenames String Array with the filenames of the files to be processed by an InvertedIndexThread object
 	 * @param docInfoList tree map with entries for each doc and it's information
 	 */
-	InvertedIndexThread(String [] filenames, TreeMap<Integer, DocInfo> docInfoList){
+	public InvertedIndexThread(String [] filenames, TreeMap<Integer, DocInfo> docInfoList, String outname){
 		this.listOfFilesToProcess = filenames;
 		this.docInfoList = docInfoList;
+		this.outname = outname;
 	};
 
 	
@@ -36,17 +38,31 @@ public class InvertedIndexThread implements Callable<TreeMap<Integer, DocInfo>> 
 	 * Creating a mini inverted index for specified files and saving it in file
 	 * 
 	 * Returns a tree map with the info about the docs it processed
+	 * @throws IOException 
 	 * @Override 
 	 */
-	public TreeMap<Integer, DocInfo> call() {
+	
+	public TreeMap<Integer, DocInfo> call() throws IOException {
 		// Hash map that implements the mini inverted index
-		Map<String, Term> miniInvertedIndex = new HashMap<>();
+		Map<String, Term> miniInvertedIndex = new TreeMap<>();
 		
+		//TODO Find way to ignore null entries - count list length without nulls
+		int numOfLegitFiles = 0;
+		for(int i = 0 ; i < listOfFilesToProcess.length ; ++i) {
+			if(listOfFilesToProcess[i] != null){
+				numOfLegitFiles++;
+			}
+		}
 		// Creating list with the filenames of the files to create the index for
-		File [] listOfFiles = new File[listOfFilesToProcess.length];
+		File [] listOfFiles = new File[numOfLegitFiles];
 		
 		for(int i = 0 ; i < listOfFiles.length ; ++i) {
-			listOfFiles[i] = new File("C:\\Users\\aintzevi\\git\\IRAssignment\\catalogue\\" + listOfFilesToProcess[i]);			
+			if(listOfFilesToProcess[i] == null){
+				System.out.println("NULL");
+			}
+			if(listOfFilesToProcess[i] != null){
+				listOfFiles[i] = new File("C:\\Users\\gogopavl\\git\\IRAssignment\\catalogue\\" + listOfFilesToProcess[i]);			
+			}
 		}
 		
 		// Object to keep the document info
@@ -110,7 +126,6 @@ public class InvertedIndexThread implements Callable<TreeMap<Integer, DocInfo>> 
 			    					// Update the values of current most frequent word, and its frequency to those of the current term
 			    					mostFreqTermFrequency = miniInvertedIndex.get(currentToken).getDocList().get(tempFreq).getTermFrequency();
 			    					mostFreqTerm  = miniInvertedIndex.get(currentToken).getWord();
-			    					System.out.println("Inside if" + mostFreqTerm + mostFreqTermFrequency);
 			    				}
 			    			}
 			    			// If the doc is not in the frequency list of this term - add it with frequency equal to 1
@@ -136,12 +151,6 @@ public class InvertedIndexThread implements Callable<TreeMap<Integer, DocInfo>> 
 	    } // End of for-loop
 		
 		/*
-		// Printing tree map entries
-		for(Map.Entry<String, Term> entry : treeMap.entrySet()) {
-			System.out.println(" Key : " + entry.getKey());
-		}
-		*/	
-		/*
 		// To find a term in the index, use a binary search function
 		try {
 			System.out.println(binarySearch(new RandomAccessFile(new File("output\\outFile.txt"), "r"), "00"));
@@ -149,7 +158,7 @@ public class InvertedIndexThread implements Callable<TreeMap<Integer, DocInfo>> 
 			System.out.println("IO Exception on binary search");
 			e.printStackTrace();
 		}*/
-		
+		writeInvertedIndexToFile(miniInvertedIndex, outname);
 		System.out.println("Mini inverted index works");
 		
 		/*docInfoList.put(55, new DocInfo(55, 100, "example", 10));
@@ -172,9 +181,9 @@ public class InvertedIndexThread implements Callable<TreeMap<Integer, DocInfo>> 
 	 * in this specific doc
 	 * @throws IOException
 	 */
-	public void writeInvertedIndexToFile (Map<String, Term> map) throws IOException {
+	public void writeInvertedIndexToFile (Map<String, Term> map, String outname) throws IOException {
 		// Buffered Writer to write the index in file
-		BufferedWriter bw = new BufferedWriter(new FileWriter(new File("output\\outFile.txt")));
+		BufferedWriter bw = new BufferedWriter(new FileWriter(new File("output\\"+outname)));
 		
 		// Iterating through the map of terms
 		for(Map.Entry<String, Term> entry : map.entrySet()) {
