@@ -1,12 +1,13 @@
 import java.util.ArrayList;
+import java.util.TreeMap;
 
 public class Term {
 	private String word;
-	private ArrayList<TermFreqInDoc> docList;
+	private TreeMap<Integer, TermFreqInDoc> docList;
 	public Term(String w, TermFreqInDoc i){
-		docList = new ArrayList<>();
+		docList = new TreeMap<>();
 		this.word = w;
-		this.docList.add(i);
+		this.docList.put(i.getDocId(),i);
 	}
 	public Term(){
 		//empty
@@ -17,10 +18,10 @@ public class Term {
 	public void setWord(String word) {
 		this.word = word;
 	}
-	public ArrayList<TermFreqInDoc> getDocList() {
+	public TreeMap<Integer, TermFreqInDoc> getDocList() {
 		return docList;
 	}
-	public void setDocList(ArrayList<TermFreqInDoc> docList) {
+	public void setDocList(TreeMap<Integer, TermFreqInDoc> docList) {
 		this.docList = docList;
 	}
 	

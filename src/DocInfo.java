@@ -5,12 +5,14 @@ public class DocInfo {
 	private int numOfWords;
 	private String mostFreqWord;
 	private int mostFreqWordFrequency;
+	private double docMagnitude;
 	
 	public DocInfo () {
 		docID = -1;
 		numOfWords = 0;
 		mostFreqWord = null;
 		mostFreqWordFrequency = 0;
+		docMagnitude = 0.0;
 	}
 	
 	public DocInfo (int docID, int numOfUniqueWords, String mostFreqWord, int mostFreqWordFrequency) {
@@ -43,5 +45,11 @@ public class DocInfo {
 	}
 	public void setMostFreqWordFrequency(int mostFreqWordFrequency) {
 		this.mostFreqWordFrequency = mostFreqWordFrequency;
+	}
+	public double getDocMagnitude() {
+		return docMagnitude;
+	}
+	public void setDocMagnitude(double docMagnitude) {
+		this.docMagnitude = docMagnitude;
 	}
 }

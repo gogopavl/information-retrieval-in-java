@@ -5,6 +5,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.StringTokenizer;
@@ -25,8 +26,6 @@ public class Main {
 		if( Runtime.getRuntime().availableProcessors()%2 != 0){
 			numberOfThreads +=1;
 		}
-	
-
 		// Creating pool with the number of threads wanted
 		service = Executors.newFixedThreadPool(numberOfThreads);
 		
@@ -36,8 +35,8 @@ public class Main {
 		
 		// Get list of files from the specified folder
 
-		File folder = new File("C:\\Users\\aintzevi\\git\\IRAssignment\\catalogue");
-//		File folder = new File("C:\\Users\\gogopavl\\git\\IRAssignment\\catalogue");
+//		File folder = new File("C:\\Users\\aintzevi\\git\\IRAssignment\\catalogue");
+		File folder = new File("C:\\Users\\gogopavl\\git\\IRAssignment\\catalogue");
 		File[] listOfFiles = folder.listFiles();
 		
 		int numOfFilesPerThread = listOfFiles.length/numberOfThreads;
@@ -76,19 +75,61 @@ public class Main {
 		for(Future<TreeMap<Integer, DocInfo>> t : taskList){
 			t.get();
 		}
-		
+		docMagnitudeCalculator(docInfoList);
 		for(Map.Entry<Integer, DocInfo> entry : docInfoList.entrySet()) {
 			System.out.println(" Key : " + entry.getKey() + " Num of Words : " + entry.getValue().getNumOfWords() + 
 					" Most Frequent Word : " + entry.getValue().getMostFreqWord() + 
-					" Most Frequent Word Frequency : " + entry.getValue().getMostFreqWordFrequency());
+					" Most Frequent Word Frequency : " + entry.getValue().getMostFreqWordFrequency() +
+					" Document magnitude: " + entry.getValue().getDocMagnitude());
 		}
 		
 		// Shutting down the executor service
 		service.shutdownNow();
 		
-		File outFolder = new File("C:\\Users\\aintzevi\\git\\IRAssignment\\output");
+//		File outFolder = new File("C:\\Users\\aintzevi\\git\\IRAssignment\\output");
+		File outFolder = new File("C:\\Users\\gogopavl\\git\\IRAssignment\\output");
 
 		twoWayMerge(new File( outFolder + "\\out0.txt"), new File( outFolder + "\\out1.txt"), outFolder + "\\merged.txt");
+	}
+	public static TreeMap<Integer, DocInfo> docMagnitudeCalculator (TreeMap<Integer, DocInfo> docList) throws IOException{
+		BufferedReader br = new BufferedReader(new FileReader("uniqueTermsPerDoc.txt"));
+		String line;
+		String [] termList;
+		String lineFetched;
+		String [] temp = null;
+		String [] tempDocPair;
+		Double docMagnitude = 0.0;
+		Double currentTermFrequency = 0.0;
+		Double tf;
+		Double idf;
+		
+		
+		while((line = br.readLine()) != null){
+			termList = line.split(" ");
+			for(int i = 1 ; i < termList.length ; ++i){
+				lineFetched = binarySearch(new RandomAccessFile("output\\merged.txt","r"), termList[i]);
+				temp = lineFetched.split(" ");
+				for(int j = 2 ; j < temp.length ; ++j ){
+					tempDocPair = temp[j].split(",");
+					if(Integer.parseInt(tempDocPair[0]) == Integer.parseInt(termList[0])){
+						 currentTermFrequency = Double.parseDouble(tempDocPair[1]);		
+						 break;
+					}
+				}
+				
+				tf = currentTermFrequency / (docList.get(Integer.parseInt(termList[0])).getMostFreqWordFrequency());
+				idf = (Math.log(docList.size() / Double.parseDouble(temp[1]))) / Math.log(2);
+				docMagnitude += Math.pow((tf * idf), 2.0) ; 
+				System.out.println("tf: " +tf+ " idf: "+idf+ " mag: ");
+				System.out.printf("%.5f", docMagnitude);
+				currentTermFrequency = 0.0;
+			}
+			System.out.println("break");
+			docList.get(Integer.parseInt(termList[0])).setDocMagnitude(Math.sqrt(docMagnitude));
+			docMagnitude = 0.0;
+		}
+		return docList;
+		
 	}
 	
 	public void externalMergeFunction(File folder){
@@ -122,7 +163,6 @@ public class Main {
 
 			// The string from line one is lexicographically smaller
 			if(tokenizedLineOne[0].compareTo(tokenizedLineTwo[0]) < 0) {
-				System.out.println("Comparison " + tokenizedLineOne[0] + " to " + tokenizedLineTwo[0] + "will write " + lineOne);
 				// Write the first line in out file
 				bw.write(lineOne);
 				bw.newLine();
@@ -132,7 +172,6 @@ public class Main {
 			}
 			// The string from line two is lexicographically smaller
 			else if(tokenizedLineOne[0].compareTo(tokenizedLineTwo[0]) > 0) {
-				System.out.println("Comparison " + tokenizedLineOne[0] + " to " + tokenizedLineTwo[0] + "will write " + lineTwo);
 				// Write the second line in out file
 				bw.write(lineTwo);
 				bw.newLine();
@@ -145,7 +184,6 @@ public class Main {
 //				System.out.println("Here!");
 				// Write term and combined frequency in the string to be written in file
 				mergedLine = tokenizedLineOne[0] + " " + (Integer.parseInt(tokenizedLineOne[1]) + Integer.parseInt(tokenizedLineTwo[1]));
-				System.out.println("First: " + mergedLine);
 				int i = 2; 
 				int j = 2;
 				
@@ -159,10 +197,7 @@ public class Main {
 						j++;
 					}
 				}
-				System.out.println("i = " + i + " length + " + tokenizedLineOne.length);
-				System.out.println("j = " + j + " length + " + tokenizedLineTwo.length);
 				if(i < tokenizedLineOne.length) {
-					System.out.println("inside i");
 					for(int k = i ; k < tokenizedLineOne.length ; ++k) {
 						mergedLine = mergedLine + " " + tokenizedLineOne[k];
 						i++;
@@ -173,12 +208,10 @@ public class Main {
 					mergedLine = null;
 				}
 				if(j < tokenizedLineTwo.length) {
-					System.out.println("inside j");
 					for(int k = j ; k < tokenizedLineTwo.length ; ++k) {
 						
 						mergedLine = mergedLine + " " + tokenizedLineTwo[k];
 						j++;
-						System.out.println("for j" + j);
 					}
 					bw.write(mergedLine);
 					bw.newLine();
@@ -200,4 +233,71 @@ public class Main {
 		brTwo.close();
 		bw.close();
 	}
+	
+	/**
+	 * Function that implements binary search in a file
+	 * 
+	 * @param file File to do the binary search on
+	 * @param seekingTerm The term to be seeked inside the file
+	 * @return The line in which the term is found inside the file as a string
+	 * @throws IOException
+	 */
+	public static String binarySearch(RandomAccessFile file, String seekingTerm) throws IOException {
+	    // Check the first line of the file in case the word we are looking for is lexicographically before that
+		// Means it is not in this index
+	    file.seek(0);
+	    // Read the line
+	    String line = file.readLine();
+	    
+	    // If the line is empty - the term wasn't found
+	    if (line == null){
+	    	System.out.println("SHOULD BE HERE" + seekingTerm);
+	    	
+	    	// Return the term the user seeks with 0 in every other field
+	    	return seekingTerm+" 0 0,0";
+	    }
+	    // If it is greater or equal than the term, this is the line we are searching for - return it
+	    if (line.compareTo(seekingTerm) >= 0)
+	        return line;
+
+	    // Binary Search
+	    
+	    // Beginning and end of file
+	    long beg = 0;
+	    long end = file.length();
+	    
+	    while (beg <= end) {
+	        // Get the mid point of the file
+	        long mid = beg + (end - beg) / 2;
+	        
+	        // Get to the middle of the file
+	        file.seek(mid);
+	        // Read line in case the the middle of the file is in the middle of the line
+	        file.readLine();
+	        
+	        // Get the next full line
+	        line = file.readLine();
+
+	        // If the term found is lexicographically greater than or equal to the word we are seeking
+	        if (line == null || line.compareTo(seekingTerm) >= 0)
+	            // Update the end of binary search space to the place before the current middle
+	            end = mid - 1;
+	        else
+	        	// Update the beginning of binary search space to the place after the current middle
+	            beg = mid + 1;
+	    } // End of binary search while-loop
+
+	    // The search falls through when the range is narrowed to nothing.
+	    file.seek(beg);
+	    file.readLine();
+	    
+	    String result = file.readLine();
+	    if(result == null){
+	    	return seekingTerm+" 0 0,0";
+	    }
+	    else
+
+		    // Return the line containing the term
+	    	return result;
+	} // End of binary search function
 }

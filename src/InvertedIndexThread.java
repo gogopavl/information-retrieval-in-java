@@ -5,16 +5,21 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
 import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
 
 
 public class InvertedIndexThread implements Callable<TreeMap<Integer, DocInfo>> {
 	private String [] listOfFilesToProcess;
 	private TreeMap<Integer, DocInfo> docInfoList;
+	private ArrayList<String> docTermsForMagnitudeComputation = new ArrayList<String>();
 	private String outname;
 	
 	public InvertedIndexThread(){
@@ -99,7 +104,10 @@ public class InvertedIndexThread implements Callable<TreeMap<Integer, DocInfo>> 
 			    		currentToken = tokenizer.nextToken().toLowerCase();
 			    		// Increment the number of words in the current doc - add info in object
 			    		currentDocInfo.setNumOfWords(currentDocInfo.getNumOfWords() + 1);
-
+			    		
+			    		if(!docTermsForMagnitudeComputation.contains(currentToken)){
+			    			docTermsForMagnitudeComputation.add(currentToken);
+			    		}
 			    		// If the current term is not inside the hash map already
 			    		if (!miniInvertedIndex.containsKey(currentToken)) {
 			    			
@@ -108,30 +116,30 @@ public class InvertedIndexThread implements Callable<TreeMap<Integer, DocInfo>> 
 			    			TermFreqInDoc tempListElement = new TermFreqInDoc(Integer.parseInt(docID),1);
 			    			Term currentTerm = new Term(currentToken, tempListElement);
 			    			miniInvertedIndex.put(currentTerm.getWord() , currentTerm);
+			    			
 			    		}
 			    		// If the current term exists in mini inverted index hash map
-			    		else {
-			    			// Index of the docId, freq arraylist, for current doc
-			    			int tempFreq = miniInvertedIndex.get(currentToken).getIndexForGivenDocID(Integer.parseInt(docID));
+			    		else {			    		
 			    			// If the doc is already in the frequency list of this term - update the frequency value
-			    			if(tempFreq >= 0 ) {
+			    			if(miniInvertedIndex.get(currentToken).getDocList().containsKey(Integer.parseInt(docID))) {
 		    					// Get the current frequency for this doc ID
-			    				int currentFreq = miniInvertedIndex.get(currentToken).getDocList().get(tempFreq).getTermFrequency();
+			    				int currentFreq = miniInvertedIndex.get(currentToken).getDocList().get(Integer.parseInt(docID)).getTermFrequency();
+//			    				System.out.println("term freq: " + currentFreq);
 			    				// Increment the term frequency for current term for this doc
-			    				miniInvertedIndex.get(currentToken).getDocList().get(tempFreq).setTermFrequency(currentFreq + 1);
-		    					
+			    				miniInvertedIndex.get(currentToken).getDocList().get(Integer.parseInt(docID)).setTermFrequency(currentFreq + 1);
+//			    				System.out.println("Should be + 1: " + miniInvertedIndex.get(currentToken).getDocList().get(docID).getTermFrequency());
 			    				// Getting the term with max frequency for the doc
 			    				// If the current term frequency is greater or equal to current max
-			    				if(miniInvertedIndex.get(currentToken).getDocList().get(tempFreq).getTermFrequency() >= mostFreqTermFrequency) {
+			    				if(miniInvertedIndex.get(currentToken).getDocList().get(Integer.parseInt(docID)).getTermFrequency() >= mostFreqTermFrequency) {
 			    					// Update the values of current most frequent word, and its frequency to those of the current term
-			    					mostFreqTermFrequency = miniInvertedIndex.get(currentToken).getDocList().get(tempFreq).getTermFrequency();
+			    					mostFreqTermFrequency = miniInvertedIndex.get(currentToken).getDocList().get(Integer.parseInt(docID)).getTermFrequency();
 			    					mostFreqTerm  = miniInvertedIndex.get(currentToken).getWord();
 			    				}
 			    			}
 			    			// If the doc is not in the frequency list of this term - add it with frequency equal to 1
 			    			else {
 			    				TermFreqInDoc tempListElement = new TermFreqInDoc(Integer.parseInt(docID),1);
-			    				miniInvertedIndex.get(currentToken).getDocList().add(tempListElement);
+			    				miniInvertedIndex.get(currentToken).getDocList().put(tempListElement.getDocId(), tempListElement);
 			    			}
 			    		}
 			    	} // End of tokenizer while loop
@@ -143,6 +151,10 @@ public class InvertedIndexThread implements Callable<TreeMap<Integer, DocInfo>> 
 				
 			}
 			catch(IOException e){ System.out.println("File not found");};	
+			
+			//call file writer
+			writeDocUniqueWordsToFile(currentDocInfo.getDocID(), docTermsForMagnitudeComputation, "uniqueTermsPerDoc.txt");
+			docTermsForMagnitudeComputation.clear();
 			
 			// Adding the doc info object in the tree map (to have it sorted by docID)
 			docInfoList.put(currentDocInfo.getDocID(), new DocInfo(currentDocInfo.getDocID(), 
@@ -184,84 +196,43 @@ public class InvertedIndexThread implements Callable<TreeMap<Integer, DocInfo>> 
 	public void writeInvertedIndexToFile (Map<String, Term> map, String outname) throws IOException {
 		// Buffered Writer to write the index in file
 		BufferedWriter bw = new BufferedWriter(new FileWriter(new File("output\\"+outname)));
-		
+		String line; 
 		// Iterating through the map of terms
 		for(Map.Entry<String, Term> entry : map.entrySet()) {
 			// Creating a string with key and number of docs in which the term is found
-			String line = entry.getKey() + " " + entry.getValue().getDocList().size();
+			line = entry.getKey() + " " + entry.getValue().getDocList().size();
 			
 			// Iterating through the array list with each docID and the frequency of the term in it
-			for( int i = 0 ; i < entry.getValue().getDocList().size() ; ++i) {				
-				// Add it to the string to be saved in file
-				line = line + " " + entry.getValue().getDocList().get(i).getDocId() + "," + entry.getValue().getDocList().get(i).getTermFrequency();
+			for(Map.Entry<Integer, TermFreqInDoc> pair : entry.getValue().getDocList().entrySet()){
+				
+				line = line + " " + pair.getValue().getDocId() + "," + pair.getValue().getTermFrequency();
 			}
 			
 			// Write line in file
 			bw.write(line);
 			bw.newLine();
+			
 		}
 		// Close writer
 		bw.close();
 	}
+	public void writeDocUniqueWordsToFile(int currentDocumentId, ArrayList<String> uniqueTerms, String outname) throws IOException{
+		// Buffered Writer to write the index in file
+		BufferedWriter bw = new BufferedWriter(new FileWriter(new File(outname),true));
+		String line = Integer.toString(currentDocumentId);
+		// Iterating through the map of terms
+		for(String entry : uniqueTerms) {
+			// Creating a string with all terms
+			line +=  " " + entry;					
+		}
+		// Write line in file
+		bw.write(line);
+		bw.newLine();
+		// Close writer
+		bw.close();
+	}
 	
-	/**
-	 * Function that implements binary search in a file
-	 * 
-	 * @param file File to do the binary search on
-	 * @param seekingTerm The term to be seeked inside the file
-	 * @return The line in which the term is found inside the file as a string
-	 * @throws IOException
-	 */
-	public static String binarySearch(RandomAccessFile file, String seekingTerm) throws IOException {
-	    // Check the first line of the file in case the word we are looking for is lexicographically before that
-		// Means it is not in this index
-	    file.seek(0);
-	    // Read the line
-	    String line = file.readLine();
-	    
-	    // If the line is empty - the term wasn't found
-	    if (line == null) 
-	    	// Return the term the user seeks with 0 in every other field
-	    	return seekingTerm + " 0 0,0"; 
-	    
-	    // If it is greater or equal than the term, this is the line we are searching for - return it
-	    if (line.compareTo(seekingTerm) >= 0)
-	        return line;
-
-	    // Binary Search
-	    
-	    // Beginning and end of file
-	    long beg = 0;
-	    long end = file.length();
-	    
-	    while (beg <= end) {
-	        // Get the mid point of the file
-	        long mid = beg + (end - beg) / 2;
-	        
-	        // Get to the middle of the file
-	        file.seek(mid);
-	        // Read line in case the the middle of the file is in the middle of the line
-	        file.readLine();
-	        
-	        // Get the next full line
-	        line = file.readLine();
-
-	        // If the term found is lexicographically greater than or equal to the word we are seeking
-	        if (line == null || line.compareTo(seekingTerm) >= 0)
-	            // Update the end of binary search space to the place before the current middle
-	            end = mid - 1;
-	        else
-	        	// Update the beginning of binary search space to the place after the current middle
-	            beg = mid + 1;
-	    } // End of binary search while-loop
-
-	    // The search falls through when the range is narrowed to nothing.
-	    file.seek(beg);
-	    file.readLine();
-	    
-	    // Return the line containing the term
-	    return file.readLine();
-	} // End of binary search function
+	
 }
 
 
