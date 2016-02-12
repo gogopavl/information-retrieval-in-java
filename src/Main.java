@@ -44,6 +44,7 @@ public class Main {
 		
 		int numOfFilesPerThread = listOfFiles.length/numberOfThreads;
 
+		
 		if(listOfFiles.length%numberOfThreads != 0){
 			numOfFilesPerThread += (numberOfThreads -listOfFiles.length%numberOfThreads);
 		}
@@ -126,7 +127,6 @@ public class Main {
 				
 				System.out.println("CurrentTermFrequency / MaxFreqInDoc: " + currentTermFrequency + "/" + (docList.get(Integer.parseInt(termList[0])).getMostFreqWordFrequency()) );
 				tf = currentTermFrequency / (docList.get(Integer.parseInt(termList[0])).getMostFreqWordFrequency());
-<<<<<<< HEAD
 				
 				System.out.println("tf: " + tf);
 				
@@ -137,7 +137,6 @@ public class Main {
 				System.out.println("idf: " + idf);	
 				docMagnitude += Math.pow((tf * idf), 2.0) ; 
 				System.out.println("mag: " + docMagnitude);
-=======
 				System.out.println("tf: " + tf);
 				
 				System.out.println("N / Nt: " + docList.size() + "/" + Double.parseDouble(temp[1]));
@@ -148,7 +147,6 @@ public class Main {
 				System.out.println("mag: " + docMagnitude);
 				
 //				System.out.println("tf: " +tf+ " idf: "+idf+ " mag: " + docMagnitude);
->>>>>>> e8d3c20fb4114b78ae43a0a92fc4afe316bfce3d
 				currentTermFrequency = 0.0;
 			}
 			System.out.println("break");
@@ -158,7 +156,7 @@ public class Main {
 		return docList;
 		
 	}
-	
+	// Legit comment 
 	public void externalMergeFunction(File folder){
 		// List with output files
 		File [] filesToBeSorted = folder.listFiles();
