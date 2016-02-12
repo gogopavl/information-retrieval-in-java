@@ -15,6 +15,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import org.omg.CORBA.Current;
+
 public class Main {
 
 	public static void main(String[] args) throws IOException, InterruptedException, ExecutionException {
@@ -35,8 +37,8 @@ public class Main {
 		
 		// Get list of files from the specified folder
 
-//		File folder = new File("C:\\Users\\aintzevi\\git\\IRAssignment\\catalogue");
-		File folder = new File("C:\\Users\\gogopavl\\git\\IRAssignment\\catalogue");
+		File folder = new File("C:\\Users\\aintzevi\\git\\IRAssignment\\catalogue");
+//		File folder = new File("C:\\Users\\gogopavl\\git\\IRAssignment\\catalogue");
 		File[] listOfFiles = folder.listFiles();
 		
 		int numOfFilesPerThread = listOfFiles.length/numberOfThreads;
@@ -86,8 +88,8 @@ public class Main {
 		// Shutting down the executor service
 		service.shutdownNow();
 		
-//		File outFolder = new File("C:\\Users\\aintzevi\\git\\IRAssignment\\output");
-		File outFolder = new File("C:\\Users\\gogopavl\\git\\IRAssignment\\output");
+		File outFolder = new File("C:\\Users\\aintzevi\\git\\IRAssignment\\output");
+//		File outFolder = new File("C:\\Users\\gogopavl\\git\\IRAssignment\\output");
 
 		twoWayMerge(new File( outFolder + "\\out0.txt"), new File( outFolder + "\\out1.txt"), outFolder + "\\merged.txt");
 	}
@@ -117,11 +119,20 @@ public class Main {
 					}
 				}
 				
+				System.out.println("DocID: " + termList[0]);
+				
+				System.out.println("CurrentTermFrequency / MaxFreqInDoc: " + currentTermFrequency + "/" + (docList.get(Integer.parseInt(termList[0])).getMostFreqWordFrequency()) );
 				tf = currentTermFrequency / (docList.get(Integer.parseInt(termList[0])).getMostFreqWordFrequency());
+				System.out.println("tf: " + tf);
+				
+				System.out.println("N / Nt: " + docList.size() + "/" + Double.parseDouble(temp[1]));
 				idf = (Math.log(docList.size() / Double.parseDouble(temp[1]))) / Math.log(2);
+				System.out.println("idf: " + idf);	
+				
 				docMagnitude += Math.pow((tf * idf), 2.0) ; 
-				System.out.println("tf: " +tf+ " idf: "+idf+ " mag: ");
-				System.out.printf("%.5f", docMagnitude);
+				System.out.println("mag: " + docMagnitude);
+				
+//				System.out.println("tf: " +tf+ " idf: "+idf+ " mag: " + docMagnitude);
 				currentTermFrequency = 0.0;
 			}
 			System.out.println("break");
@@ -229,6 +240,12 @@ public class Main {
 			}
 			
 		} // End of reading files while-loop
+		
+		if(lineOne != null)
+			bw.write(lineOne);
+		if(lineTwo != null)
+			bw.write(lineTwo);
+		
 		brOne.close();
 		brTwo.close();
 		bw.close();
@@ -293,6 +310,8 @@ public class Main {
 	    
 	    String result = file.readLine();
 	    if(result == null){
+
+	    	System.out.println("SHOULD BE HERE" + seekingTerm);
 	    	return seekingTerm+" 0 0,0";
 	    }
 	    else
