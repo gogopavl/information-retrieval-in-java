@@ -1,41 +1,53 @@
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
+import org.apache.commons.io.FileUtils;
 
 public class tester {
 	
 	public static void main(String[] args) throws IOException{
+		String exm = "out13.txt".split("\\.")[0].split("out")[1];
+		System.out.println("STRING: "+exm);
 		
-		// Buffered Writer to write the index in file
-				String outname = "temp.txt";
-				String [] one = {"example","hello","world"};
-				String [] two = {"example2","hello2","world2"};
-				BufferedWriter bw = new BufferedWriter(new FileWriter(new File(outname)));
-				String line = Integer.toString(5);
-				// Iterating through the map of terms
-				for(String entry : one) {
-					// Creating a string with all terms
-					line +=  " " + entry;					
-				}
-				// Write line in file
-				bw.write(line);
-				bw.newLine();
-				// Close writer
-				bw.close();
-				
-				line = Integer.toString(15);
-				bw = new BufferedWriter(new FileWriter(new File(outname),true));
-				for(String entry : two) {
-					// Creating a string with all terms
-					line +=  " " + entry;					
-				}
-				// Write line in file
-				bw.write(line);
-				bw.newLine();
-				// Close writer
-				bw.close();
+		
+		InputStream inStream = null;
+		OutputStream outStream = null;
 			
+	    	try{
+	    		
+	    	    File afile =new File("example.txt");
+	    	    File bfile =new File("src\\example2.txt");
+	    		
+	    	    inStream = new FileInputStream(afile);
+	    	    outStream = new FileOutputStream(bfile);
+	        	
+	    	    byte[] buffer = new byte[1024];
+	    		
+	    	    int length;
+	    	    //copy the file content in bytes 
+	    	    while ((length = inStream.read(buffer)) > 0){
+	    	  
+	    	    	outStream.write(buffer, 0, length);
+	    	 
+	    	    }
+	    	 
+	    	    inStream.close();
+	    	    outStream.close();
+	    	    
+	    	    //delete the original file
+	    	    afile.delete();
+	    	    
+	    	    System.out.println("File is copied successful!");
+	    	    
+	    	}catch(IOException e){
+	    	    e.printStackTrace();
+	    	}
 	}
 	
 	

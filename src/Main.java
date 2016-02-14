@@ -40,8 +40,8 @@ public class Main {
 		
 		// Get list of files from the specified folder
 
-		File folder = new File("C:\\Users\\aintzevi\\git\\IRAssignment\\catalogue");
-//		File folder = new File("C:\\Users\\gogopavl\\git\\IRAssignment\\catalogue");
+//		File folder = new File("C:\\Users\\aintzevi\\git\\IRAssignment\\catalogue");
+		File folder = new File("C:\\Users\\gogopavl\\git\\IRAssignment\\catalogue");
 		File[] listOfFiles = folder.listFiles();
 		
 		int numOfFilesPerThread = listOfFiles.length/numberOfThreads;
@@ -89,7 +89,16 @@ public class Main {
 			t.get();
 		}
 		
-		System.out.println("****************" + taskList.size());
+		// Shutting down the executor service
+		service.shutdownNow();
+		
+		
+//		File outFolder = new File("C:\\Users\\aintzevi\\git\\IRAssignment\\output");
+		File outFolder = new File("C:\\Users\\gogopavl\\git\\IRAssignment\\output");
+		
+		externalMergeFunction(outFolder, 1);
+		// Compute magnitude of docs
+		docMagnitudeCalculator(docInfoList);
 		
 		for(Map.Entry<Integer, DocInfo> entry : docInfoList.entrySet()) {
 			System.out.println(" Key : " + entry.getKey() + " Num of Words : " + entry.getValue().getNumOfWords() + 
@@ -97,18 +106,7 @@ public class Main {
 					" Most Frequent Word Frequency : " + entry.getValue().getMostFreqWordFrequency() +
 					" Document magnitude: " + entry.getValue().getDocMagnitude());
 		}
-		// Compute magnitude of docs
-//		docMagnitudeCalculator(docInfoList);
-		
-		// Shutting down the executor service
-		service.shutdownNow();
-		
-		
-		File outFolder = new File("C:\\Users\\aintzevi\\git\\IRAssignment\\output");
-//		File outFolder = new File("C:\\Users\\gogopavl\\git\\IRAssignment\\output");
-		
-		externalMergeFunction(outFolder, 1);
-//		twoWayMerge(new File( outFolder + "\\out0.txt"), new File( outFolder + "\\out1.txt"), outFolder + "\\merged.txt");
+	
 	}
 	
 	/**
@@ -136,7 +134,7 @@ public class Main {
 			// For each unique term that exists in the doc
 			for(int i = 1 ; i < termList.length ; ++i){
 				// Binary search in the inverted index for the term
-				lineFetched = binarySearch(new RandomAccessFile("output\\merged.txt","r"), termList[i]);
+				lineFetched = binarySearch(new RandomAccessFile("invertedIndex.txt","r"), termList[i]);
 				// Split the fetched line on space
 				temp = lineFetched.split(" ");
 				// For each docID, frequency pair
@@ -150,30 +148,29 @@ public class Main {
 						break;
 					}
 				}
-				System.out.println("DocID: " + termList[0]);
-				System.out.println("CurrentTermFrequency / MaxFreqInDoc: " + currentTermFrequency + "/" + (docList.get(Integer.parseInt(termList[0])).getMostFreqWordFrequency()) );
+//				System.out.println("DocID: " + termList[0]);
+//				System.out.println("CurrentTermFrequency / MaxFreqInDoc: " + currentTermFrequency + "/" + (docList.get(Integer.parseInt(termList[0])).getMostFreqWordFrequency()) );
 				
-				System.out.println("DocID: " + termList[0]);
-				
-				System.out.println("CurrentTermFrequency / MaxFreqInDoc: " + currentTermFrequency + "/" + (docList.get(Integer.parseInt(termList[0])).getMostFreqWordFrequency()) );
+//				System.out.println("DocID: " + termList[0]);
+//				
+//				System.out.println("CurrentTermFrequency / MaxFreqInDoc: " + currentTermFrequency + "/" + (docList.get(Integer.parseInt(termList[0])).getMostFreqWordFrequency()) );
 				// Tf computation - frequency of the term in this doc to frequency of the most frequent word in the doc
 				tf = currentTermFrequency / (docList.get(Integer.parseInt(termList[0])).getMostFreqWordFrequency());
 				
-				System.out.println("tf: " + tf);
-				
-				System.out.println("N / Nt: " + docList.size() + "/" + Double.parseDouble(temp[1]));
+//				System.out.println("tf: " + tf);
+//				
+//				System.out.println("N / Nt: " + docList.size() + "/" + Double.parseDouble(temp[1]));
 				// Idf computation - number of all docs to number of docs in which thte term exists
 				idf = (Math.log(docList.size() / Double.parseDouble(temp[1]))) / Math.log(2);
 				
-				System.out.println("idf: " + idf);	
+//				System.out.println("idf: " + idf);	
 				// for each unique term of doc, get the sum of square weights
 				docMagnitude += Math.pow((tf * idf), 2.0) ; 
-				System.out.println("mag: " + docMagnitude);
-				System.out.println("tf: " + tf);
+//				System.out.println("mag: " + docMagnitude);
+//				System.out.println("tf: " + tf);
 				
 				currentTermFrequency = 0.0;
 			}
-			System.out.println("break");
 			
 			// Set magnitude value inside the respective DocInfo object
 			docList.get(Integer.parseInt(termList[0])).setDocMagnitude(Math.sqrt(docMagnitude));
@@ -206,6 +203,8 @@ public class Main {
 
 				// Merge the two files, add file to output folder for merged files
 				twoWayMerge(filesToBeSorted[i], filesToBeSorted[i + 1], folder + "\\" + outName);
+				filesToBeSorted[i].delete();
+				filesToBeSorted[i + 1].delete();
 			}
 		}
 		// If the number of files is odd
@@ -215,11 +214,13 @@ public class Main {
 
 				// Merge the two files, add file to output folder for merged files
 				twoWayMerge(filesToBeSorted[i], filesToBeSorted[i + 1], folder + "\\" + outName);
+				filesToBeSorted[i].delete();
+				filesToBeSorted[i + 1].delete();
 			}
 			
 			outName = filesToBeSorted[filesToBeSorted.length-1].toString();
 			
-			String newFileName = "mg" + mergePhase + "out" + (filesToBeSorted.length-1) + ".txt";
+			String newFileName = folder+ "\\mg" + mergePhase + "out" + (filesToBeSorted.length-1) + ".txt";
 			
 			
 			File oldfile =new File(outName);
