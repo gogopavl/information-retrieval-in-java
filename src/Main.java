@@ -14,6 +14,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.logging.Logger;
 
 import org.apache.commons.io.FileUtils;
 import org.omg.CORBA.Current;
@@ -42,6 +43,7 @@ public class Main {
 
 //		File folder = new File("C:\\Users\\aintzevi\\git\\IRAssignment\\catalogue");
 		File folder = new File("C:\\Users\\gogopavl\\git\\IRAssignment\\catalogue");
+		
 		File[] listOfFiles = folder.listFiles();
 		
 		int numOfFilesPerThread = listOfFiles.length/numberOfThreads;
@@ -60,7 +62,7 @@ public class Main {
 		int count = 0;
 		// Counter to keep track of the file naming
 		int outputFileNameCounter = 0;
-		
+		long catalogueStartTime = System.currentTimeMillis();
 		for (int i = 0; i < listOfFiles.length; i++) {
 			File file = listOfFiles[i];
 			if (file.isFile() && file.getName().endsWith(".txt") && count < numOfFilesPerThread) {
@@ -89,6 +91,7 @@ public class Main {
 			t.get();
 		}
 		
+		
 		// Shutting down the executor service
 		service.shutdownNow();
 		
@@ -97,18 +100,43 @@ public class Main {
 		File outFolder = new File("C:\\Users\\gogopavl\\git\\IRAssignment\\output");
 		
 		externalMergeFunction(outFolder, 1);
+		long catalogueEndTime = System.currentTimeMillis();
+		FileUtils.deleteDirectory(new File("output"));
 		// Compute magnitude of docs
 		docMagnitudeCalculator(docInfoList);
-		
-		for(Map.Entry<Integer, DocInfo> entry : docInfoList.entrySet()) {
-			System.out.println(" Key : " + entry.getKey() + " Num of Words : " + entry.getValue().getNumOfWords() + 
-					" Most Frequent Word : " + entry.getValue().getMostFreqWord() + 
-					" Most Frequent Word Frequency : " + entry.getValue().getMostFreqWordFrequency() +
-					" Document magnitude: " + entry.getValue().getDocMagnitude());
+		//Read queries from input.txt and find top k most relevant docs
+		final ExecutorService serv;
+		serv = Executors.newFixedThreadPool(1);
+		long queryStartTime = System.currentTimeMillis();
+		BufferedReader br = new BufferedReader(new FileReader("input.txt"));
+		String line;
+		int numOfQueries = Integer.parseInt(br.readLine());
+		String [] queries = new String [numOfQueries];
+		int i = 0 ;
+		while((line = br.readLine())!= null){
+			queries[i++] = line;
 		}
-	
+		br.close();
+		//Call thread to process queries
+		Future<String []> task = serv.submit(new QueryProcessing(docInfoList, "C:\\Users\\gogopavl\\git\\IRAssignment\\invertedIndex.txt", queries)); 
+		//Top k docs result
+		String[] topKDocs = task.get();
+		long queryEndTime = System.currentTimeMillis();
+		BufferedWriter bw = new BufferedWriter(new FileWriter(new File("output.txt")));
+		bw.write("QueryID DocID:CosineSimilarity ...");
+		bw.newLine();
+		for(String s : topKDocs){
+			bw.write(s);
+			bw.newLine();
+		}
+		bw.write("Index building took: "+(catalogueEndTime - catalogueStartTime) + " milliseconds");
+		bw.newLine();
+		bw.write("Query processesing took: "+(queryEndTime - queryStartTime) + " milliseconds");
+		bw.close();
+		serv.shutdownNow();
+		
+		System.out.println("end of  main");
 	}
-	
 	/**
 	 * Function that calculates the magnitude of a vector in tree map form
 	 * @param docList DocInfo objects in a tree map form
@@ -148,33 +176,22 @@ public class Main {
 						break;
 					}
 				}
-//				System.out.println("DocID: " + termList[0]);
-//				System.out.println("CurrentTermFrequency / MaxFreqInDoc: " + currentTermFrequency + "/" + (docList.get(Integer.parseInt(termList[0])).getMostFreqWordFrequency()) );
-				
-//				System.out.println("DocID: " + termList[0]);
-//				
-//				System.out.println("CurrentTermFrequency / MaxFreqInDoc: " + currentTermFrequency + "/" + (docList.get(Integer.parseInt(termList[0])).getMostFreqWordFrequency()) );
 				// Tf computation - frequency of the term in this doc to frequency of the most frequent word in the doc
 				tf = currentTermFrequency / (docList.get(Integer.parseInt(termList[0])).getMostFreqWordFrequency());
-				
-//				System.out.println("tf: " + tf);
-//				
-//				System.out.println("N / Nt: " + docList.size() + "/" + Double.parseDouble(temp[1]));
-				// Idf computation - number of all docs to number of docs in which thte term exists
-				idf = (Math.log(docList.size() / Double.parseDouble(temp[1]))) / Math.log(2);
-				
-//				System.out.println("idf: " + idf);	
-				// for each unique term of doc, get the sum of square weights
+
+				idf = (Math.log(docList.size() / Double.parseDouble(temp[1]))) /Math.log(2);
+
 				docMagnitude += Math.pow((tf * idf), 2.0) ; 
-//				System.out.println("mag: " + docMagnitude);
-//				System.out.println("tf: " + tf);
-				
 				currentTermFrequency = 0.0;
 			}
 			
 			// Set magnitude value inside the respective DocInfo object
 			docList.get(Integer.parseInt(termList[0])).setDocMagnitude(Math.sqrt(docMagnitude));
 			docMagnitude = 0.0;
+		}
+		br.close();
+		if(new File("uniqueTermsPerDoc.txt").exists()){
+			new File("uniqueTermsPerDoc.txt").delete();
 		}
 		return docList;
 		
@@ -187,10 +204,7 @@ public class Main {
 	public static void externalMergeFunction(File folder, int mergePhase) throws IOException{
 		// List with output files
 		File [] filesToBeSorted = folder.listFiles();
-		
   		String outName;
-		
-  		System.out.println(mergePhase);
   		if( filesToBeSorted.length == 2) {
   			twoWayMerge(filesToBeSorted[0], filesToBeSorted[1], "invertedIndex.txt");
   			return;
@@ -217,7 +231,6 @@ public class Main {
 				filesToBeSorted[i].delete();
 				filesToBeSorted[i + 1].delete();
 			}
-			
 			outName = filesToBeSorted[filesToBeSorted.length-1].toString();
 			
 			String newFileName = folder+ "\\mg" + mergePhase + "out" + (filesToBeSorted.length-1) + ".txt";
@@ -226,12 +239,12 @@ public class Main {
 			File oldfile =new File(outName);
 			File newfile =new File(newFileName);
 			
-			if(oldfile.renameTo(newfile))
-				System.out.println("Rename succesful");
+			if(oldfile.renameTo(newfile)){
+//				System.out.println("Rename succesful");
+			}
 			else
 				System.out.println("Rename failed");
-		}
-		// Delete output folder
+		}	
 		
 		externalMergeFunction(folder, mergePhase + 1);
 		
@@ -383,8 +396,7 @@ public class Main {
 	    
 	    // If the line is empty - the term wasn't found
 	    if (line == null){
-	    	System.out.println("SHOULD BE HERE" + seekingTerm);
-	    	
+	    	System.out.println("Term _"+seekingTerm+"_ does not exist in document collection!");	    	
 	    	// Return the term the user seeks with 0 in every other field
 	    	return seekingTerm+" 0 0,0";
 	    }
@@ -426,7 +438,7 @@ public class Main {
 	    String result = file.readLine();
 	    if(result == null){
 
-	    	System.out.println("SHOULD BE HERE" + seekingTerm);
+	    	System.out.println("Term _"+seekingTerm+"_ does not exist in document collection!");
 	    	return seekingTerm+" 0 0,0";
 	    }
 	    else

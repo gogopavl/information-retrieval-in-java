@@ -36,8 +36,6 @@ public class InvertedIndexThread implements Callable<TreeMap<Integer, DocInfo>> 
 		this.docInfoList = docInfoList;
 		this.outname = outname;
 	};
-
-	//comment
 	/**
 	 * Method executed in a thread
 	 * Creating a mini inverted index for specified files and saving it in file
@@ -63,7 +61,7 @@ public class InvertedIndexThread implements Callable<TreeMap<Integer, DocInfo>> 
 		
 		for(int i = 0 ; i < listOfFiles.length ; ++i) {
 			if(listOfFilesToProcess[i] == null){
-				System.out.println("NULL");
+				System.out.println("Check filepath");
 			}
 			if(listOfFilesToProcess[i] != null){
 				listOfFiles[i] = new File("C:\\Users\\gogopavl\\git\\IRAssignment\\catalogue\\" + listOfFilesToProcess[i]);			
@@ -124,10 +122,10 @@ public class InvertedIndexThread implements Callable<TreeMap<Integer, DocInfo>> 
 			    			if(miniInvertedIndex.get(currentToken).getDocList().containsKey(Integer.parseInt(docID))) {
 		    					// Get the current frequency for this doc ID
 			    				int currentFreq = miniInvertedIndex.get(currentToken).getDocList().get(Integer.parseInt(docID)).getTermFrequency();
-//			    				System.out.println("term freq: " + currentFreq);
+
 			    				// Increment the term frequency for current term for this doc
 			    				miniInvertedIndex.get(currentToken).getDocList().get(Integer.parseInt(docID)).setTermFrequency(currentFreq + 1);
-//			    				System.out.println("Should be + 1: " + miniInvertedIndex.get(currentToken).getDocList().get(docID).getTermFrequency());
+
 			    				// Getting the term with max frequency for the doc
 			    				// If the current term frequency is greater or equal to current max
 			    				if(miniInvertedIndex.get(currentToken).getDocList().get(Integer.parseInt(docID)).getTermFrequency() >= mostFreqTermFrequency) {
@@ -162,24 +160,8 @@ public class InvertedIndexThread implements Callable<TreeMap<Integer, DocInfo>> 
 					currentDocInfo.getMostFreqWordFrequency()));
 	    } // End of for-loop
 		
-		/*
-		// To find a term in the index, use a binary search function
-		try {
-			System.out.println(binarySearch(new RandomAccessFile(new File("output\\outFile.txt"), "r"), "00"));
-		} catch (IOException e) {
-			System.out.println("IO Exception on binary search");
-			e.printStackTrace();
-		}*/
 		writeInvertedIndexToFile(miniInvertedIndex, outname);
-		System.out.println("Mini inverted index works");
-		
-		/*docInfoList.put(55, new DocInfo(55, 100, "example", 10));
-		docInfoList.put(new Random().nextInt(100), new DocInfo(11, 100, "example", 10));
-		*/
-		
-		// TODO 1. multithreading 
-		// TODO 2. merge mini inverted indexes 
-		// TODO 3. queries
+			
 		return docInfoList;
 		
 	}//end of call method
@@ -194,6 +176,16 @@ public class InvertedIndexThread implements Callable<TreeMap<Integer, DocInfo>> 
 	 * @throws IOException
 	 */
 	public void writeInvertedIndexToFile (Map<String, Term> map, String outname) throws IOException {
+		File dir = new File("output");
+		// if the directory does not exist, create it
+		if (!dir.exists()) {
+		    try{
+		        dir.mkdir();
+		    } 
+		    catch(SecurityException se){
+		        //handle it
+		    } 
+		}
 		// Buffered Writer to write the index in file
 		BufferedWriter bw = new BufferedWriter(new FileWriter(new File("output\\"+outname)));
 		String line; 
